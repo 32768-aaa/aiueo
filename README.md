@@ -1,2 +1,3 @@
-# aiueo
-Chromebookでの開発練習用
+# Chromebook開発開始
+
+GitHub Web Editorテスト成功 🚀
