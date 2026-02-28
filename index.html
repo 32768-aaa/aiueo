@@ -2,14 +2,184 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Test</title>
+  <title>キャラクター検索</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .search-container {
+      margin-bottom: 30px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      flex: 1;
+      min-width: 200px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .character-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .character-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid #007bff;
+    }
+    .character-card h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+    .side {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .side.インポスター {
+      background-color: #ff6b6b;
+      color: white;
+    }
+    .side.クルー {
+      background-color: #4ecdc4;
+      color: white;
+    }
+    .side.ニュートラル {
+      background-color: #ffd93d;
+      color: #333;
+    }
+    .side.ラバーズ {
+      background-color: #ff69b4;
+      color: white;
+    }
+    .description {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #666;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .no-results {
+      text-align: center;
+      color: #999;
+      padding: 40px 20px;
+      grid-column: 1 / -1;
+    }
+  </style>
 </head>
 <body>
-  <h1>Chromebook開発成功</h1>
-  <p id="out"></p>
+  <h1>キャラクター検索</h1>
+  
+  <div class="search-container">
+    <input 
+      type="text" 
+      id="searchInput" 
+      placeholder="キャラクター名で検索..."
+    >
+    <select id="sideFilter">
+      <option value="">陣営を選択...</option>
+      <option value="インポスター">インポスター</option>
+      <option value="クルー">クルー</option>
+      <option value="ニュートラル">ニュートラル</option>
+      <option value="ラバーズ">ラバーズ</option>
+    </select>
+    <button onclick="searchCharacters()">検索</button>
+    <button onclick="resetSearch()">リセット</button>
+  </div>
+
+  <div id="results" class="character-list"></div>
 
   <script>
-    document.getElementById("out").textContent = "JavaScript動作OK";
+    let allCharacters = [];
+
+    // JSON ファイルを読み込む
+    async function loadCharacters() {
+      try {
+        const response = await fetch('json.json');
+        allCharacters = await response.json();
+        displayCharacters(allCharacters);
+      } catch (error) {
+        console.error('JSON ファイルの読み込みに失敗しました:', error);
+        document.getElementById('results').innerHTML = 
+          '<div class="no-results">データの読み込みに失敗しました</div>';
+      }
+    }
+
+    // キャラクターを表示する
+    function displayCharacters(characters) {
+      const resultsDiv = document.getElementById('results');
+      
+      if (characters.length === 0) {
+        resultsDiv.innerHTML = '<div class="no-results">検索結果がありません</div>';
+        return;
+      }
+
+      resultsDiv.innerHTML = characters.map(character => `
+        <div class="character-card">
+          <h3>${character.name}</h3>
+          <div class="side ${character.side}">${character.side}</div>
+          <div class="description">${character.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    // 検索機能
+    function searchCharacters() {
+      const searchName = document.getElementById('searchInput').value.toLowerCase();
+      const selectedSide = document.getElementById('sideFilter').value;
+
+      const filtered = allCharacters.filter(character => {
+        const matchesName = character.name.toLowerCase().includes(searchName);
+        const matchesSide = selectedSide === '' || character.side === selectedSide;
+        return matchesName && matchesSide;
+      });
+
+      displayCharacters(filtered);
+    }
+
+    // リセット
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('sideFilter').value = '';
+      displayCharacters(allCharacters);
+    }
+
+    // ページ読み込み時に JSON を読み込む
+    loadCharacters();
+
+    // Enter キーで検索できるようにする
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchCharacters();
+    });
   </script>
 </body>
 </html>
