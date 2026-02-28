@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>キャラクター検索</title>
+  <title>キャラクター＆属性検索</title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
       background-color: #f5f5f5;
@@ -21,7 +21,7 @@
       gap: 10px;
       flex-wrap: wrap;
     }
-    input {
+    input, select {
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
@@ -41,19 +41,48 @@
     button:hover {
       background-color: #0056b3;
     }
-    .character-list {
+
+    /* タブスタイル */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+    }
+    .tab-button {
+      padding: 10px 20px;
+      background-color: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 16px;
+      color: #666;
+    }
+    .tab-button.active {
+      color: #007bff;
+      border-bottom-color: #007bff;
+      background-color: transparent;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .character-list, .attribute-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 20px;
     }
-    .character-card {
+    .character-card, .attribute-card {
       background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       border-left: 4px solid #007bff;
     }
-    .character-card h3 {
+    .character-card h3, .attribute-card h3 {
       margin: 0 0 10px 0;
       color: #333;
     }
@@ -73,8 +102,8 @@
       background-color: #4ecdc4;
       color: white;
     }
-    .side.ニュートラル {
-      align-self: start;background-color: #808080;  /* 灰色 */
+    .side.ニュ��トラル {
+      background-color: #808080;
       color: white;
     }
     .side.ラバーズ {
@@ -88,6 +117,15 @@
       max-height: 200px;
       overflow-y: auto;
     }
+    .attribute-type {
+      display: inline-block;
+      padding: 3px 8px;
+      background-color: #e9ecef;
+      border-radius: 3px;
+      font-size: 12px;
+      color: #333;
+      margin-bottom: 10px;
+    }
     .no-results {
       text-align: center;
       color: #999;
@@ -97,41 +135,84 @@
   </style>
 </head>
 <body>
-  <h1>キャラクター検索</h1>
+  <h1>Among Us MOD 検索ツール</h1>
   
-  <div class="search-container">
-    <input 
-      type="text" 
-      id="searchInput" 
-      placeholder="キャラクター名で検索..."
-    >
-    <select id="sideFilter">
-      <option value="">陣営を選択...</option>
-      <option value="インポスター">インポスター</option>
-      <option value="クルー">クルー</option>
-      <option value="ニュートラル">ニュートラル</option>
-      <option value="ラバーズ">ラバーズ</option>
-    </select>
-    <button onclick="searchCharacters()">検索</button>
-    <button onclick="resetSearch()">リセット</button>
+  <div class="tabs">
+    <button class="tab-button active" onclick="switchTab('characters')">役職</button>
+    <button class="tab-button" onclick="switchTab('attributes')">属性</button>
   </div>
 
-  <div id="results" class="character-list"></div>
+  <!-- 役職タブ -->
+  <div id="characters" class="tab-content active">
+    <div class="search-container">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="キャラクター名で検索..."
+      >
+      <select id="sideFilter">
+        <option value="">陣営を選択...</option>
+        <option value="インポスター">インポスター</option>
+        <option value="クルー">クルー</option>
+        <option value="ニュートラル">ニュートラル</option>
+        <option value="ラバーズ">ラバーズ</option>
+      </select>
+      <button onclick="searchCharacters()">検索</button>
+      <button onclick="resetSearch()">リセット</button>
+    </div>
+    <div id="results" class="character-list"></div>
+  </div>
+
+  <!-- 属性タブ -->
+  <div id="attributes" class="tab-content">
+    <div class="search-container">
+      <input 
+        type="text" 
+        id="attributeSearchInput" 
+        placeholder="属性名で検索..."
+      >
+      <button onclick="searchAttributes()">検索</button>
+      <button onclick="resetAttributeSearch()">リセット</button>
+    </div>
+    <div id="attributeResults" class="attribute-list"></div>
+  </div>
 
   <script>
     let allCharacters = [];
+    let allAttributes = [];
 
     // JSON ファイルを読み込む
-    async function loadCharacters() {
+    async function loadData() {
       try {
-        const response = await fetch('json.json');
-        allCharacters = await response.json();
+        const charResponse = await fetch('json.json');
+        allCharacters = await charResponse.json();
+        
+        const attrResponse = await fetch('zokusei.json');
+        allAttributes = await attrResponse.json();
+        
         displayCharacters(allCharacters);
+        displayAttributes(allAttributes);
       } catch (error) {
-        console.error('JSON ファイルの読み込みに失敗しました:', error);
+        console.error('ファイルの読み込みに失敗しました:', error);
         document.getElementById('results').innerHTML = 
           '<div class="no-results">データの読み込みに失敗しました</div>';
       }
+    }
+
+    // タブ切り替え
+    function switchTab(tabName) {
+      // タブコンテンツを隠す
+      document.getElementById('characters').classList.remove('active');
+      document.getElementById('attributes').classList.remove('active');
+      
+      // ボタンのアクティブ状態を外す
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // 選択されたタブを表示
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
     }
 
     // キャラクターを表示する
@@ -152,7 +233,24 @@
       `).join('');
     }
 
-    // 検索機能
+    // 属性を表示する
+    function displayAttributes(attributes) {
+      const resultsDiv = document.getElementById('attributeResults');
+      
+      if (attributes.length === 0) {
+        resultsDiv.innerHTML = '<div class="no-results">検索結果がありません</div>';
+        return;
+      }
+
+      resultsDiv.innerHTML = attributes.map(attribute => `
+        <div class="attribute-card">
+          <h3>${attribute.name}</h3>
+          <div class="description">${attribute.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    // 役職検索機能
     function searchCharacters() {
       const searchName = document.getElementById('searchInput').value.toLowerCase();
       const selectedSide = document.getElementById('sideFilter').value;
@@ -166,19 +264,39 @@
       displayCharacters(filtered);
     }
 
-    // リセット
+    // 役職検索リセット
     function resetSearch() {
       document.getElementById('searchInput').value = '';
       document.getElementById('sideFilter').value = '';
       displayCharacters(allCharacters);
     }
 
-    // ページ読み込み時に JSON を読み込む
-    loadCharacters();
+    // 属性検索機能
+    function searchAttributes() {
+      const searchName = document.getElementById('attributeSearchInput').value.toLowerCase();
+
+      const filtered = allAttributes.filter(attribute => {
+        return attribute.name.toLowerCase().includes(searchName);
+      });
+
+      displayAttributes(filtered);
+    }
+
+    // 属性検索リセット
+    function resetAttributeSearch() {
+      document.getElementById('attributeSearchInput').value = '';
+      displayAttributes(allAttributes);
+    }
+
+    // ページ読み込み時にデータを読み込む
+    loadData();
 
     // Enter キーで検索できるようにする
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') searchCharacters();
+    });
+    document.getElementById('attributeSearchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchAttributes();
     });
   </script>
 </body>
