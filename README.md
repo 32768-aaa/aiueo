@@ -1,3 +1,3 @@
-# Chromebook開発開始
-
-GitHub Web Editorテスト成功 🚀
+# TOH-Kの役職を検索できるツール
+※私はTOH-Kの作者とは関係ありません。
+この検索ツールはwikiを参照しながら作ったので正確です。
